@@ -14,12 +14,10 @@ export function useEstoque() {
         const res = await fetch("http://localhost:3000/variacoes");
         const data = await res.json();
 
-        // 1. filtra estoque disponível
         const filtrado = data.filter(v => v.quantidade_rolos > 0);
 
         setVariacoes(filtrado);
 
-        // 2. tecidos únicos (baseado em tecido_id)
         const tecidosUnicos = [
           ...new Map(
             filtrado.map(v => [v.tecido_id, v])
@@ -39,15 +37,43 @@ export function useEstoque() {
     carregarEstoque();
   }, []);
 
-  // função utilitária: cores por tecido
   function getCoresPorTecido(tecidoId) {
     return variacoes.filter(v => v.tecido_id == tecidoId);
   }
 
-  // função utilitária: pegar preço do tecido
   function getPrecoTecido(tecidoId) {
     const tecido = tecidos.find(t => t.tecido_id == tecidoId);
     return tecido?.preco_por_kg || 0;
+  }
+
+  // 🆕 NOVO: valida estoque antes de vender
+  function validarEstoqueVenda(itens) {
+    const erros = [];
+
+    for (const item of itens) {
+      const variacao = variacoes.find(
+        v => v.tecido_id == item.tecido_id && v.cor == item.cor
+      );
+
+      if (!variacao) {
+        erros.push(`Estoque não encontrado (${item.cor})`);
+        continue;
+      }
+
+      const totalRolosPedido = item.pesos.length;
+      const estoqueDisponivel = variacao.quantidade_rolos;
+
+      if (totalRolosPedido > estoqueDisponivel) {
+        erros.push(
+          `Estoque insuficiente (${item.cor}) → pedido: ${totalRolosPedido}, disponível: ${estoqueDisponivel}`
+        );
+      }
+    }
+
+    return {
+      ok: erros.length === 0,
+      erros
+    };
   }
 
   return {
@@ -56,6 +82,7 @@ export function useEstoque() {
     loading,
     error,
     getCoresPorTecido,
-    getPrecoTecido
+    getPrecoTecido,
+    validarEstoqueVenda // 👈 novo
   };
 }

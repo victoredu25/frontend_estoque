@@ -1,111 +1,298 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApi } from "../hooks/useApi";
+import { useEstoque } from "../hooks/useEstoque";
+import { usePersistedState } from "../hooks/usePersistedState";
 
 export default function Entrada() {
-  const [form, setForm] = useState({
-    fornecedor_id: "",
-    valor_total: "",
-    recebido_por: "",
-    tecido_id: ""
-  });
+  const { get, post } = useApi();
+  const { tecidos, getCoresPorTecido } = useEstoque();
 
-  const [itens, setItens] = useState([
-    { cor: "", quantidade_kg: "", quantidade_rolos: "" }
-  ]);
+  const [fornecedores, setFornecedores] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
 
-  function handleFormChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
-  }
+  const [itens, setItens] = usePersistedState("entrada_itens", []);
+  const [fornecedorId, setFornecedorId] = usePersistedState("entrada_fornecedor", "");
+  const [tecidoId, setTecidoId] = usePersistedState("entrada_tecido", "");
+  const [recebidoPor, setRecebidoPor] = usePersistedState("entrada_recebido_por", "");
 
-  function handleItemChange(index, e) {
-    const novosItens = [...itens];
-    novosItens[index][e.target.name] = e.target.value;
-    setItens(novosItens);
-  }
+  const [novoFornecedor, setNovoFornecedor] = useState({ nome: "", telefone: "" });
+  const [mostrarNovoFornecedor, setMostrarNovoFornecedor] = useState(false);
+
+  const [erro, setErro] = useState(null);
+  const [mensagem, setMensagem] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function carregar() {
+      const [f, u] = await Promise.all([
+        get("/fornecedores"),
+        get("/usuarios")
+      ]);
+
+      setFornecedores(f);
+      setUsuarios(u);
+    }
+
+    carregar();
+  }, []);
 
   function adicionarItem() {
-    setItens([
-      ...itens,
-      { cor: "", quantidade_kg: "", quantidade_rolos: "" }
+    if (!tecidoId) {
+      setErro("Selecione um tecido primeiro");
+      return;
+    }
+
+    setItens(prev => [
+      ...prev,
+      { cor: "", quantidade_rolos: 1 }
     ]);
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  function atualizarItem(index, campo, valor) {
+    setItens(prev => {
+      const copia = [...prev];
+      copia[index][campo] = valor;
+      return copia;
+    });
+  }
 
-    const payload = {
-      fornecedor_id: Number(form.fornecedor_id),
-      valor_total: Number(form.valor_total),
-      recebido_por: Number(form.recebido_por),
-      itens: itens.map(item => ({
-        tecido_id: Number(form.tecido_id),
-        cor: item.cor,
-        quantidade_kg: Number(item.quantidade_kg),
-        quantidade_rolos: Number(item.quantidade_rolos)
-      }))
-    };
+  function removerItem(index) {
+    setItens(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function validar() {
+    if (!fornecedorId || !recebidoPor) return "Fornecedor e usuário são obrigatórios";
+    if (!tecidoId) return "Tecido obrigatório";
+    if (itens.length === 0) return "Adicione pelo menos uma cor";
+
+    for (const i of itens) {
+      if (!i.cor) return "Todas as cores são obrigatórias";
+      if (!i.quantidade_rolos || Number(i.quantidade_rolos) <= 0)
+        return "Rolos devem ser maiores que zero";
+    }
+
+    return null;
+  }
+
+  async function confirmarEntrada() {
+    const msgErro = validar();
+    if (msgErro) {
+      setErro(msgErro);
+      return;
+    }
+
+    const ok = window.confirm("Confirmar entrada?");
+    if (!ok) return;
 
     try {
-      const res = await fetch("http://localhost:3000/entradas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
+      setLoading(true);
+
+      await post("/entradas", {
+        fornecedor_id: Number(fornecedorId),
+        valor_total: 0,
+        recebido_por: Number(recebidoPor),
+        itens: itens.map(i => ({
+          tecido_id: Number(tecidoId),
+          cor: i.cor,
+          quantidade_rolos: Number(i.quantidade_rolos)
+        }))
       });
 
-      const data = await res.json();
-      console.log(data);
+      setItens([]);
+      setFornecedorId("");
+      setTecidoId("");
+      setRecebidoPor("");
 
-      alert("Entrada criada com sucesso 🚀");
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao criar entrada");
+      setMensagem("Entrada registrada 🚀");
+      setErro(null);
+
+    } catch {
+      setErro("Erro ao registrar entrada");
+    } finally {
+      setLoading(false);
     }
   }
 
+  async function salvarFornecedor() {
+    if (!novoFornecedor.nome) return;
+
+    const res = await post("/fornecedores", novoFornecedor);
+
+    setFornecedores(prev => [...prev, res]);
+    setFornecedorId(res.id);
+
+    setNovoFornecedor({ nome: "", telefone: "" });
+    setMostrarNovoFornecedor(false);
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl mb-4">Nova Entrada</h1>
+    <div className="p-6 text-white">
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2 max-w-md">
-        <input name="fornecedor_id" placeholder="Fornecedor ID" onChange={handleFormChange} />
-        <input name="valor_total" placeholder="Valor total" onChange={handleFormChange} />
-        <input name="recebido_por" placeholder="Usuário ID" onChange={handleFormChange} />
-        <input name="tecido_id" placeholder="Tecido ID" onChange={handleFormChange} />
+      <h1 className="text-3xl font-bold mb-6">Nova Entrada</h1>
 
-        <hr />
+      {erro && <div className="bg-red-500/20 p-3 rounded mb-3">{erro}</div>}
+      {mensagem && <div className="bg-green-500/20 p-3 rounded mb-3">{mensagem}</div>}
 
-        {itens.map((item, index) => (
-          <div key={index} className="border p-2 rounded">
+      {/* TOPO */}
+      <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-4 mb-6">
+
+        <select
+          className="bg-zinc-800 p-2 rounded"
+          value={fornecedorId}
+          onChange={e => setFornecedorId(e.target.value)}
+        >
+          <option value="">Fornecedor</option>
+          {fornecedores.map(f => (
+            <option key={f.id} value={f.id}>{f.nome}</option>
+          ))}
+        </select>
+
+        <button
+          onClick={() => setMostrarNovoFornecedor(true)}
+          className="bg-zinc-800 px-3 rounded"
+        >
+          + Fornecedor
+        </button>
+
+        <select
+          className="bg-zinc-800 p-2 rounded"
+          value={tecidoId}
+          onChange={e => setTecidoId(e.target.value)}
+        >
+          <option value="">Tecido</option>
+          {tecidos.map(t => (
+            <option key={t.tecido_id} value={t.tecido_id}>
+              {t.tecido_nome}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="bg-zinc-800 p-2 rounded"
+          value={recebidoPor}
+          onChange={e => setRecebidoPor(e.target.value)}
+        >
+          <option value="">Recebido por</option>
+          {usuarios.map(u => (
+            <option key={u.id} value={u.id}>{u.nome}</option>
+          ))}
+        </select>
+
+      </div>
+
+      {/* ITENS */}
+      {itens.map((item, index) => (
+        <div key={index} className="bg-zinc-900 border border-zinc-800 p-4 rounded mb-3">
+
+          <div className="flex gap-3">
+
+            <select
+              className="bg-zinc-800 p-2 rounded"
+              value={item.cor}
+              onChange={e => atualizarItem(index, "cor", e.target.value)}
+            >
+              <option value="">Cor</option>
+              {getCoresPorTecido(tecidoId).map(c => (
+                <option key={c.cor} value={c.cor}>{c.cor}</option>
+              ))}
+            </select>
+
             <input
-              name="cor"
-              placeholder="Cor"
-              onChange={(e) => handleItemChange(index, e)}
+              type="number"
+              min="1"
+              className="bg-zinc-800 p-2 rounded w-24"
+              value={item.quantidade_rolos}
+              onChange={e =>
+                atualizarItem(index, "quantidade_rolos", e.target.value)
+              }
             />
-            <input
-              name="quantidade_kg"
-              placeholder="KG"
-              onChange={(e) => handleItemChange(index, e)}
-            />
-            <input
-              name="quantidade_rolos"
-              placeholder="Rolos"
-              onChange={(e) => handleItemChange(index, e)}
-            />
+
           </div>
-        ))}
 
-        <button type="button" onClick={adicionarItem} className="bg-gray-300 p-2">
-          + Adicionar cor
+          <button
+            onClick={() => removerItem(index)}
+            className="text-red-400 mt-2 text-sm"
+          >
+            Remover
+          </button>
+
+        </div>
+      ))}
+
+      {/* BOTÃO ADD */}
+      <button
+        onClick={adicionarItem}
+        className="bg-zinc-800 px-4 py-2 rounded mb-6"
+      >
+        + Adicionar cor
+      </button>
+
+      {/* FOOTER */}
+      <div className="flex gap-3">
+
+        <button
+          onClick={confirmarEntrada}
+          className="bg-blue-600 px-4 py-2 rounded"
+        >
+          Confirmar entrada
         </button>
 
-        <button className="bg-blue-500 text-white p-2 mt-2">
-          Criar Entrada
+        <button
+          onClick={() => {
+            if (confirm("Cancelar entrada?")) {
+              setItens([]);
+              setFornecedorId("");
+              setTecidoId("");
+              setRecebidoPor("");
+            }
+          }}
+          className="bg-red-600 px-4 py-2 rounded"
+        >
+          Cancelar
         </button>
-      </form>
+
+      </div>
+
+      {/* MODAL FORNECEDOR */}
+      {mostrarNovoFornecedor && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+          <div className="bg-zinc-900 p-6 rounded w-[400px]">
+
+            <input
+              placeholder="Nome"
+              className="w-full p-2 bg-zinc-800 mb-2"
+              value={novoFornecedor.nome}
+              onChange={e =>
+                setNovoFornecedor({ ...novoFornecedor, nome: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Telefone"
+              className="w-full p-2 bg-zinc-800 mb-3"
+              value={novoFornecedor.telefone}
+              onChange={e =>
+                setNovoFornecedor({ ...novoFornecedor, telefone: e.target.value })
+              }
+            />
+
+            <div className="flex gap-2">
+              <button onClick={salvarFornecedor} className="bg-green-600 px-3 py-2 rounded">
+                Salvar
+              </button>
+
+              <button
+                onClick={() => setMostrarNovoFornecedor(false)}
+                className="bg-red-600 px-3 py-2 rounded"
+              >
+                Cancelar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
