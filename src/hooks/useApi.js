@@ -1,20 +1,35 @@
-const BASE_URL = "http://localhost:3000";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://localhost:3000"
+});
+
+// 🔐 adiciona token automaticamente
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 export function useApi() {
-  async function get(endpoint) {
-    const res = await fetch(`${BASE_URL}${endpoint}`);
-    return await res.json();
+  async function get(url) {
+    const res = await api.get(url);
+    return res.data;
   }
 
-  async function post(endpoint, data) {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-
-    return await res.json();
+  async function post(url, data) {
+    const res = await api.post(url, data);
+    return res.data;
   }
 
-  return { get, post };
+  async function put(url, data) {
+    const res = await api.put(url, data);
+    return res.data;
+  }
+
+  return { get, post, put };
 }
