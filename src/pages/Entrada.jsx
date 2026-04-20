@@ -232,9 +232,10 @@ export default function Entrada() {
 
         <button
           onClick={confirmarEntrada}
-          className="bg-blue-600 px-4 py-2 rounded"
+          disabled={loading}
+          className="bg-blue-600 px-4 py-2 rounded disabled:opacity-50"
         >
-          Confirmar entrada
+          {loading ? "Salvando..." : "Confirmar entrada"}
         </button>
 
         <button
