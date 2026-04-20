@@ -7,7 +7,7 @@ export default function Estoque() {
   const PESO_MEDIO_ROLO = 18.5;
 
   useEffect(() => {
-    fetch("http://localhost:3000/variacoes")
+      fetch("https://backend-estoque-8boj.onrender.com/variacoes")
       .then(res => res.json())
       .then(data => setDados(data))
       .catch(err => console.error(err));
