@@ -11,7 +11,7 @@ export function useEstoque() {
       try {
         setLoading(true);
 
-        const res = await fetch("http://localhost:3000/variacoes");
+        const res = await fetch("https://backend-estoque-8boj.onrender.com/variacoes");
         const data = await res.json();
 
         const filtrado = data.filter(v => v.quantidade_rolos > 0);
