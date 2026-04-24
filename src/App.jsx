@@ -7,6 +7,7 @@ import Entrada from "./pages/Entrada";
 import Saida from "./pages/Saida";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Administracao from "./pages/Administracao";
 
 import PrivateRoute from "./components/PrivateRoute";
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/saida" element={<Saida />} />
           <Route path="/historico" element={<Historico />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/administracao" element={<Administracao />} />
         </Route>
 
       </Routes>

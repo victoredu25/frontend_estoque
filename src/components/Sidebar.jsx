@@ -49,6 +49,13 @@ export default function Sidebar() {
           </Link>
 
           <Link
+            to="/administracao"
+            className="px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
+          >
+            Administração
+          </Link>
+
+          <Link
             to="/dashboard"
             className="px-3 py-2 rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
           >
