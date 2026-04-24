@@ -3,7 +3,7 @@ import { useApi } from "../hooks/useApi";
 import { useEstoque } from "../hooks/useEstoque";
 
 export default function Administracao() {
-  const { get, post, put } = useApi();
+  const { get, post, put, del } = useApi();
   const { tecidos, variacoes } = useEstoque();
 
   const [abaAtiva, setAbaAtiva] = useState("tecidos");
@@ -14,7 +14,7 @@ export default function Administracao() {
   const [fornecedores, setFornecedores] = useState([]);
 
   // Estados para formulários
-  const [novoUsuario, setNovoUsuario] = useState({ nome: "", senha: "" });
+  const [novoUsuario, setNovoUsuario] = useState({ nome: "", senha: "", tipo: "vendedor" });
   const [editandoUsuario, setEditandoUsuario] = useState(null);
 
   const [novoCliente, setNovoCliente] = useState({ nome: "", telefone: "", endereco: "" });
@@ -75,8 +75,8 @@ export default function Administracao() {
   }
 
   async function atualizarUsuario() {
-    if (!editandoUsuario?.nome) {
-      setErro("Nome é obrigatório");
+    if (!editandoUsuario?.nome || !editandoUsuario?.tipo) {
+      setErro("Nome e tipo são obrigatórios");
       return;
     }
 
@@ -84,6 +84,7 @@ export default function Administracao() {
       setLoading(true);
       await put(`/usuarios/${editandoUsuario.id}`, {
         nome: editandoUsuario.nome,
+        tipo: editandoUsuario.tipo,
         senha: editandoUsuario.senha
       });
       setUsuarios(prev => prev.map(u =>
@@ -104,12 +105,7 @@ export default function Administracao() {
 
     try {
       setLoading(true);
-      await fetch(`https://backend-estoque-8boj.onrender.com/usuarios/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await del(`/usuarios/${id}`);
       setUsuarios(prev => prev.filter(u => u.id !== id));
       setMensagem("Usuário excluído!");
     } catch {
@@ -390,6 +386,15 @@ export default function Administracao() {
                   value={novoUsuario.senha}
                   onChange={e => setNovoUsuario({ ...novoUsuario, senha: e.target.value })}
                 />
+                <select
+                  value={novoUsuario.tipo}
+                  onChange={e => setNovoUsuario({ ...novoUsuario, tipo: e.target.value })}
+                  className="bg-zinc-700 p-2 rounded"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="vendedor">Vendedor</option>
+                  <option value="gerente">Gerente</option>
+                </select>
                 <button
                   onClick={salvarUsuario}
                   disabled={loading}
@@ -419,6 +424,15 @@ export default function Administracao() {
                         value={editandoUsuario.senha}
                         onChange={e => setEditandoUsuario({ ...editandoUsuario, senha: e.target.value })}
                       />
+                      <select
+                        value={editandoUsuario.tipo}
+                        onChange={e => setEditandoUsuario({ ...editandoUsuario, tipo: e.target.value })}
+                        className="bg-zinc-700 p-2 rounded"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="vendedor">Vendedor</option>
+                        <option value="gerente">Gerente</option>
+                      </select>
                       <button
                         onClick={atualizarUsuario}
                         disabled={loading}
@@ -437,11 +451,11 @@ export default function Administracao() {
                     <>
                       <div>
                         <p className="font-semibold">{usuario.nome}</p>
-                        <p className="text-sm text-zinc-400">ID: {usuario.id}</p>
+                        <p className="text-sm text-zinc-400">ID: {usuario.id} · {usuario.tipo}</p>
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setEditandoUsuario({ ...usuario })}
+                          onClick={() => setEditandoUsuario({ ...usuario, senha: "" })}
                           className="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-sm"
                         >
                           Editar

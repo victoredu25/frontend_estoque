@@ -1,4 +1,4 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://backend-estoque-8boj.onrender.com"
@@ -31,5 +31,10 @@ export function useApi() {
     return res.data;
   }
 
-  return { get, post, put };
+  async function del(url) {
+    const res = await api.delete(url);
+    return res.data;
+  }
+
+  return { get, post, put, del };
 }
