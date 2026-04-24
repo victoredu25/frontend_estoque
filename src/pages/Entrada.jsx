@@ -14,6 +14,7 @@ export default function Entrada() {
   const [fornecedorId, setFornecedorId] = usePersistedState("entrada_fornecedor", "");
   const [tecidoId, setTecidoId] = usePersistedState("entrada_tecido", "");
   const [recebidoPor, setRecebidoPor] = usePersistedState("entrada_recebido_por", "");
+  const [valorTotal, setValorTotal] = usePersistedState("entrada_valor_total", "");
 
   const [novoFornecedor, setNovoFornecedor] = useState({ nome: "", telefone: "" });
   const [mostrarNovoFornecedor, setMostrarNovoFornecedor] = useState(false);
@@ -63,6 +64,7 @@ export default function Entrada() {
   function validar() {
     if (!fornecedorId || !recebidoPor) return "Fornecedor e usuário são obrigatórios";
     if (!tecidoId) return "Tecido obrigatório";
+    if (!valorTotal || Number(valorTotal) <= 0) return "Valor total deve ser maior que zero";
     if (itens.length === 0) return "Adicione pelo menos uma cor";
 
     for (const i of itens) {
@@ -89,7 +91,7 @@ export default function Entrada() {
 
       await post("/entradas", {
         fornecedor_id: Number(fornecedorId),
-        valor_total: 0,
+        valor_total: Number(valorTotal),
         recebido_por: Number(recebidoPor),
         itens: itens.map(i => ({
           tecido_id: Number(tecidoId),
@@ -102,6 +104,7 @@ export default function Entrada() {
       setFornecedorId("");
       setTecidoId("");
       setRecebidoPor("");
+      setValorTotal("");
 
       setMensagem("Entrada registrada 🚀");
       setErro(null);
@@ -227,6 +230,20 @@ export default function Entrada() {
         + Adicionar cor
       </button>
 
+      {/* VALOR TOTAL */}
+      <div className="mb-6">
+        <label className="block text-sm mb-2">Valor Total da Entrada (R$)</label>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          className="bg-zinc-800 p-2 rounded w-48"
+          value={valorTotal}
+          onChange={e => setValorTotal(e.target.value)}
+          placeholder="0.00"
+        />
+      </div>
+
       {/* FOOTER */}
       <div className="flex gap-3">
 
@@ -245,6 +262,7 @@ export default function Entrada() {
               setFornecedorId("");
               setTecidoId("");
               setRecebidoPor("");
+              setValorTotal("");
             }
           }}
           className="bg-red-600 px-4 py-2 rounded"
