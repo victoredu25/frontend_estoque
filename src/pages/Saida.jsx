@@ -433,6 +433,7 @@ export default function Saida() {
         cliente={clientes.find(c => c.id == clienteId)?.nome}
         vendedor={usuarios.find(u => u.id == vendedorId)?.nome}
         itens={itens}
+        tecidos={tecidos}
         loading={loading}
       />
 
