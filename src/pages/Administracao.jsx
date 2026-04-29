@@ -163,15 +163,12 @@ export default function Administracao() {
 
     try {
       setLoading(true);
-      await fetch(`https://backend-estoque-8boj.onrender.com/clientes/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await del(`/clientes/${id}`);
       setClientes(prev => prev.filter(c => c.id !== id));
       setMensagem("Cliente excluído!");
-    } catch {
+      setErro(null);
+    } catch (err) {
+      console.error(err);
       setErro("Erro ao excluir cliente");
     } finally {
       setLoading(false);
@@ -226,15 +223,12 @@ export default function Administracao() {
 
     try {
       setLoading(true);
-      await fetch(`https://backend-estoque-8boj.onrender.com/fornecedores/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await del(`/fornecedores/${id}`);
       setFornecedores(prev => prev.filter(f => f.id !== id));
       setMensagem("Fornecedor excluído!");
-    } catch {
+      setErro(null);
+    } catch (err) {
+      console.error(err);
       setErro("Erro ao excluir fornecedor");
     } finally {
       setLoading(false);
