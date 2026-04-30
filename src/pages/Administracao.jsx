@@ -358,7 +358,8 @@ export default function Administracao() {
                     </button>
                   )}
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
         )}
