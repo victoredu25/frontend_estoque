@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 
+import axios from "axios";
+
+const BASE_URL = "https://backend-estoque-8boj.onrender.com";
+
+const api = axios.create({
+  baseURL: BASE_URL
+});
+
 export function useEstoque() {
   const [variacoes, setVariacoes] = useState([]);
   const [tecidos, setTecidos] = useState([]);
@@ -11,20 +19,26 @@ export function useEstoque() {
       try {
         setLoading(true);
 
-        const res = await fetch("https://backend-estoque-8boj.onrender.com/variacoes");
-        const data = await res.json();
+        const [variacoesRes, tecidosRes] = await Promise.all([
+          api.get('/variacoes'),
+          api.get('/tecidos')
+        ]);
 
-        const filtrado = data.filter(v => v.quantidade_rolos > 0);
+        const variacoesData = variacoesRes.data;
+        const tecidosData = tecidosRes.data;
+
+        console.log('Tecidos data:', tecidosData);
+        console.log('Variacoes data:', variacoesData);
+
+        const filtrado = variacoesData.filter(v => v.quantidade_rolos > 0);
 
         setVariacoes(filtrado);
 
-        const tecidosUnicos = [
-          ...new Map(
-            filtrado.map(v => [v.tecido_id, v])
-          ).values()
-        ];
-
-        setTecidos(tecidosUnicos);
+        setTecidos(tecidosData.map(t => ({
+          ...t,
+          tecido_id: t.id,
+          tecido_nome: t.nome
+        })));
 
       } catch (err) {
         console.error("Erro ao carregar estoque:", err);

@@ -1,7 +1,7 @@
 ﻿import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? "http://localhost:3000" : "https://backend-estoque-8boj.onrender.com"
+  baseURL: "https://backend-estoque-8boj.onrender.com"
 });
 
 // 🔐 adiciona token automaticamente

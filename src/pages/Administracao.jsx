@@ -304,8 +304,13 @@ export default function Administracao() {
             <h2 className="text-xl font-bold mb-4">Preços de Tecidos</h2>
 
             <div className="space-y-3">
-              {tecidos.map(tecido => (
-                <div key={tecido.tecido_id} className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+              {tecidos.length === 0 ? (
+                <div className="p-4 bg-zinc-800 rounded-lg text-zinc-400">
+                  Nenhum tecido encontrado. Verifique se há tecidos cadastrados ou estoque disponível.
+                </div>
+              ) : (
+                tecidos.map(tecido => (
+                  <div key={tecido.tecido_id} className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
                   <div>
                     <p className="font-semibold">{tecido.tecido_nome}</p>
                     <p className="text-sm text-zinc-400">
