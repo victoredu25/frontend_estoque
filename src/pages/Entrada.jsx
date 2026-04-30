@@ -195,7 +195,7 @@ export default function Entrada() {
               onChange={e => atualizarItem(index, "cor", e.target.value)}
             >
               <option value="">Cor</option>
-              {getCoresPorTecido(tecidoId).map(c => (
+              {getCoresPorTecido(tecidoId, { inStock: false }).map(c => (
                 <option key={c.cor} value={c.cor}>{c.cor}</option>
               ))}
             </select>

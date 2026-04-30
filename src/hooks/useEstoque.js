@@ -27,9 +27,7 @@ export function useEstoque() {
         const variacoesData = variacoesRes.data;
         const tecidosData = tecidosRes.data;
 
-        const filtrado = variacoesData.filter(v => Number(v.quantidade_rolos) > 0);
-
-        setVariacoes(filtrado);
+        setVariacoes(variacoesData);
 
         setTecidos(tecidosData.map(t => ({
           ...t,
@@ -48,7 +46,7 @@ export function useEstoque() {
     carregarEstoque();
   }, []);
 
-  function getCoresPorTecido(tecidoId) {
+  function getCoresPorTecido(tecidoId, { inStock = true } = {}) {
     const id = Number(tecidoId);
     if (!id) return [];
 
@@ -56,6 +54,7 @@ export function useEstoque() {
 
     for (const variacao of variacoes) {
       if (Number(variacao.tecido_id) !== id) continue;
+      if (inStock && Number(variacao.quantidade_rolos) <= 0) continue;
 
       const cor = String(variacao.cor || "").trim();
       if (!cor) continue;
