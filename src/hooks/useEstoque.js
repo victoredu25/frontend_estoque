@@ -52,11 +52,18 @@ export function useEstoque() {
   }, []);
 
   function getCoresPorTecido(tecidoId) {
-    return variacoes.filter(v => v.tecido_id == tecidoId);
+    if (!tecidoId) return [];
+
+    const idStr = String(tecidoId);
+
+    return variacoes
+      .filter(v => String(v.tecido_id) === idStr)
+      .filter((v, index, self) => self.findIndex(x => x.cor === v.cor) === index);
   }
 
   function getPrecoTecido(tecidoId) {
-    const tecido = tecidos.find(t => t.tecido_id == tecidoId);
+    const idStr = String(tecidoId);
+    const tecido = tecidos.find(t => String(t.tecido_id) === idStr);
     return tecido?.preco_por_kg || 0;
   }
 
