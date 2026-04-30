@@ -27,10 +27,7 @@ export function useEstoque() {
         const variacoesData = variacoesRes.data;
         const tecidosData = tecidosRes.data;
 
-        console.log('Tecidos data:', tecidosData);
-        console.log('Variacoes data:', variacoesData);
-
-        const filtrado = variacoesData.filter(v => v.quantidade_rolos > 0);
+        const filtrado = variacoesData.filter(v => Number(v.quantidade_rolos) > 0);
 
         setVariacoes(filtrado);
 
@@ -52,18 +49,30 @@ export function useEstoque() {
   }, []);
 
   function getCoresPorTecido(tecidoId) {
-    if (!tecidoId) return [];
+    const id = Number(tecidoId);
+    if (!id) return [];
 
-    const idStr = String(tecidoId);
+    const coresUnicas = [];
 
-    return variacoes
-      .filter(v => String(v.tecido_id) === idStr)
-      .filter((v, index, self) => self.findIndex(x => x.cor === v.cor) === index);
+    for (const variacao of variacoes) {
+      if (Number(variacao.tecido_id) !== id) continue;
+
+      const cor = String(variacao.cor || "").trim();
+      if (!cor) continue;
+
+      if (!coresUnicas.some(item => item.cor === cor)) {
+        coresUnicas.push({ ...variacao, cor });
+      }
+    }
+
+    return coresUnicas;
   }
 
   function getPrecoTecido(tecidoId) {
-    const idStr = String(tecidoId);
-    const tecido = tecidos.find(t => String(t.tecido_id) === idStr);
+    const id = Number(tecidoId);
+    if (!id) return 0;
+
+    const tecido = tecidos.find(t => Number(t.tecido_id) === id);
     return tecido?.preco_por_kg || 0;
   }
 
